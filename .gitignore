@@ -1,0 +1,5 @@
+__pycache__
+fakenode/var/lib/vz/snippets/*
+.venv
+.env.dev
+.env.local
