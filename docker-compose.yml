@@ -21,3 +21,4 @@ services:
       - TZ=America/Detroit
       - ENV
       - API_TOKEN
+    restart: always
