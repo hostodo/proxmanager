@@ -35,7 +35,7 @@ def snippets_network_vmid_post(vm_id):
     mac_address = body.get('mac_address')
 
     def stringit(s):
-        return f'{s}'
+        return s
 
     if not ipv4_addresses or not mac_address:
         return {
@@ -69,7 +69,7 @@ def snippets_network_vmid_post(vm_id):
             {
                 "type": "physical",
                 "name": "eth0",
-                "mac_address": mac_address.lower(),
+                "mac_address": mac_address,
                 "subnets": network_static_assignments
             },
             {
