@@ -28,3 +28,5 @@ server {
 EOL
 
 ln -s /etc/nginx/sites-available/proxmanager.conf /etc/nginx/sites-enabled/proxmanager.conf
+
+certbot --nginx -d proxmanager.$NODE_HOSTNAME

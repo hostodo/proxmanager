@@ -1,5 +1,6 @@
 __pycache__
 fakenode/var/lib/vz/snippets/*
 .venv
+.env
 .env.dev
 .env.local
