@@ -21,6 +21,12 @@ def authenticate():
         raise BadRequestException("Invalid token")
 
 
+@app.route('/status', methods=['GET'])
+def status():
+    return {
+        "status": "ok"
+    }
+
 @app.route('/node/snippets/network/<vm_id>', methods=['POST'])
 def snippets_network_vmid_post(vm_id):
     authenticate()
