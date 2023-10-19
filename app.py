@@ -34,6 +34,9 @@ def snippets_network_vmid_post(vm_id):
     ipv6_addresses = body.get('ipv6_addresses')
     mac_address = body.get('mac_address')
 
+    def stringit(str):
+        return f'"{str}"'
+
     if not ipv4_addresses or not mac_address:
         return {
             "error": "ipv4_addresses and mac_address are required"
@@ -43,19 +46,19 @@ def snippets_network_vmid_post(vm_id):
     for ipv4_address in ipv4_addresses:
         network_static_assignments.append({
             "type": "static",
-            "address": ipv4_address.get('address'),
-            "netmask": ipv4_address.get('netmask'),
-            "gateway": ipv4_address.get('gateway')
+            "address": stringit(ipv4_address.get('address')),
+            "netmask": stringit(ipv4_address.get('netmask')),
+            "gateway": stringit(ipv4_address.get('gateway'))
         })
 
     for ipv6_address in ipv6_addresses:
         network_static_assignments.append({
             "type": "static6",
-            "address": ipv6_address.get('address'),
-            "gateway": ipv6_address.get('gateway'),
+            "address": stringit(ipv6_address.get('address')),
+            "gateway": stringit(ipv6_address.get('gateway')),
             "routes": [
                 {
-                    "to": ipv6_address.get('gateway')
+                    "to": stringit(ipv6_address.get('gateway'))
                 }
             ]
         })
@@ -72,11 +75,11 @@ def snippets_network_vmid_post(vm_id):
             {
                 "type": "nameserver",
                 "address": [
-                    "8.8.8.8",
-                    "8.8.4.4"
+                    stringit("8.8.8.8"),
+                    stringit("8.8.4.4")
                 ],
                 "search": [
-                    "det01.hostodo.com"
+                    stringit("det01.hostodo.com")
                 ]
             }
         ]
