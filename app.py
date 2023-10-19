@@ -82,8 +82,8 @@ def snippets_network_vmid_post(vm_id):
         ]
     }
 
-    config_file_path = f'{os.getenv("SNIPPETS_DIR")}/snippets/{vm_id}-network.yaml'
-    with open(config_file_path, 'x') as outfile:
+    config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
+    with open(config_file_path, 'w') as outfile:
         yaml.dump(cloud_init_network, outfile, default_flow_style=False)
 
     return {
