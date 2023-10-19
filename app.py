@@ -34,8 +34,8 @@ def snippets_network_vmid_post(vm_id):
     ipv6_addresses = body.get('ipv6_addresses')
     mac_address = body.get('mac_address')
 
-    def stringit(str):
-        return f'{str}'
+    def stringit(s):
+        return "'" + s + "'"
 
     if not ipv4_addresses or not mac_address:
         return {
