@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/usr/local/lib/proxmanager
-ExecStart=/usr/local/lib/proxmanager/.venv/bin/gunicorn --workers 3 --bind unix:proxmanager.sock -m 007 app:app
+ExecStart=/usr/local/lib/proxmanager/.venv/bin/gunicorn --workers 3 --bind unix:///var/run/proxmanager.sock -m 007 app:app
 
 [Install]
 WantedBy=multi-user.target
