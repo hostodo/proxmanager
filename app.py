@@ -1,16 +1,10 @@
 from flask import Flask, request, make_response
-import yaml
 import os
 import json
 import subprocess
+from ruamel.yaml import YAML
 
 from utils.exceptions import BadRequestException
-
-def quoted_presenter(dumper, data):
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
-
-yaml.add_representer(str, quoted_presenter)
-
 
 app = Flask(__name__)
 
@@ -93,7 +87,8 @@ def snippets_network_vmid_post(vm_id):
 
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
-        yaml.dump(cloud_init_network, outfile, default_flow_style=False)
+        yaml = YAML()
+        yaml.dump(cloud_init_network, outfile)
 
     return {
         "file_path": config_file_path,
