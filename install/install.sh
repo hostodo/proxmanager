@@ -18,6 +18,9 @@ server {
     listen 80;
     server_name proxmanager.$NODE_HOSTNAME;
 
+    allow 45.43.23.21;
+    deny all;
+
     location / {
         include proxy_params;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
