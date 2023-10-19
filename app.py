@@ -9,7 +9,6 @@ from utils.exceptions import BadRequestException
 app = Flask(__name__)
 
 def authenticate():
-    print(str(os.getenv('API_TOKEN')))
     headers = request.headers
     token = headers.get('Authorization')
 
@@ -83,8 +82,8 @@ def snippets_network_vmid_post(vm_id):
         ]
     }
 
-    config_file_path = f'/snippets/{vm_id}-network.yaml'
-    with open(f'/snippets/{vm_id}-network.yaml', 'w') as outfile:
+    config_file_path = f'{os.getenv("SNIPPETS_DIR")}/snippets/{vm_id}-network.yaml'
+    with open(config_file_path, 'w') as outfile:
         yaml.dump(cloud_init_network, outfile, default_flow_style=False)
 
     return {
