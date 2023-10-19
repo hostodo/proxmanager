@@ -21,7 +21,7 @@ server {
     # 1214 Geneva AT&T Fiber
     allow 69.221.240.6;
     # Odopanel API server
-    allow 66.187.7.3
+    allow 66.187.7.3;
     deny all;
 
     location / {
