@@ -9,7 +9,7 @@ if [ "$ENV" = "dev" ]; then
 elif [ "$ENV" = "local" ]; then
   gunicorn --bind=:6999 --workers=3 --timeout=600 --access-logfile=- --error-logfile=- --reload app:app
 else
-  gunicorn --bind unix:///var/run/proxmanager.sock --workers=3 --timeout=600 --access-logfile=- --error-logfile=- app:app
+  gunicorn --bind unix:///var/run/proxmanager.sock --workers=3 --timeout=600 --access-logfile=/var/log/proxmanager/access.log --error-logfile=/var/log/proxmanager/error.log  app:app
 fi
 
 while [ true ]; do

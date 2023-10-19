@@ -5,6 +5,8 @@ NODE_HOSTNAME=$1
 adduser proxmanager
 cp ./config/proxmanager-py.service /etc/systemd/system/proxmanager-py.service
 
+mkdir /var/log/proxmanager
+
 systemctl start proxmanager-py
 systemctl enable proxmanager-py
 
