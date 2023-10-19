@@ -66,7 +66,7 @@ def snippets_network_vmid_post(vm_id):
             {
                 "type": "physical",
                 "name": "eth0",
-                "mac_address": mac_address.to_lower(),
+                "mac_address": mac_address.lower(),
                 "subnets": network_static_assignments
             },
             {
