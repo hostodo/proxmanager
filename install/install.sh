@@ -18,7 +18,10 @@ server {
     listen 80;
     server_name proxmanager.$NODE_HOSTNAME;
 
-    allow 45.43.23.21;
+    # 1214 Geneva AT&T Fiber
+    allow 69.221.240.6;
+    # Odopanel API server
+    allow 66.187.7.3
     deny all;
 
     location / {
