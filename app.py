@@ -99,7 +99,7 @@ def snippets_network_vmid_apply_post(vm_id):
         "set",
         vm_id,
         "--cicustom",
-        f'\"network:local:snippets/{vm_id}-network.yaml\"'
+        f'\"network=local:snippets/{vm_id}-network.yaml\"'
     ])
 
     return { "status": "ok" }
