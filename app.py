@@ -85,16 +85,49 @@ def snippets_network_vmid_post(vm_id):
         ]
     }
 
+    v2_addresses = []
+    for ipv4_address in ipv4_addresses:
+        v2_addresses.append(f"{ipv4_address.get('address')}/24")
+
+    for ipv6_address in ipv6_addresses:
+        v2_addresses.append(f"{ipv6_address.get('address')}/64")
+
+    cloud_init_network_v2 = {
+        "version": 2,
+        "ethernets": {
+            "eth0": {
+                "match": {
+                    "macaddress": mac_address
+                },
+                "dhcp4": False,
+                "dhcp6": False,
+                "address": v2_addresses,
+                "gateway4": ipv4_addresses[0].get('gateway'),
+                "gateway6": ipv6_addresses[0].get('gateway'),
+                "routes": [
+                    {
+                        "to": ipv4_addresses[0].get('gateway')
+                    }
+                ],
+                "nameservers": {
+                    "addresses": [
+                        '8.8.8.8',
+                        '8.8.4.4'
+                    ]
+                }
+            }
+        }
+    }
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
         yaml = YAML()
         yaml.preserve_quotes = True
         yaml.explicit_start = True
-        yaml.dump(cloud_init_network, outfile)
+        yaml.dump(cloud_init_network_v2, outfile)
 
     return {
         "file_path": config_file_path,
-        "config": cloud_init_network
+        "config": cloud_init_network_v2
     }
 
 
