@@ -104,7 +104,9 @@ def snippets_network_vmid_post(vm_id):
                 "addresses": v2_addresses,
                 "routes": [
                     {
-                        "to": ipv6_addresses[0].get('gateway')
+                        "to": ipv6_addresses[0].get('gateway'),
+                        "via": ipv6_addresses[0].get('gateway'),
+                        "scope": "link"
                     },
                     {
                         "to": "default",
