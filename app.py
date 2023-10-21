@@ -107,14 +107,14 @@ def snippets_network_vmid_post(vm_id):
                         "to": ipv6_addresses[0].get('gateway')
                     },
                     {
-                        "to": "::/0",
+                        "to": "default",
                         "on-link": True,
                         "via": ipv6_addresses[0].get('gateway')
                     },
-                    # {
-                    #     "to": "default",
-                    #     "via": "66.187.7.1"
-                    # }
+                    {
+                        "to": "default",
+                        "via": "66.187.7.1"
+                    }
                 ],
                 "nameservers": {
                     "addresses": [
