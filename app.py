@@ -70,6 +70,8 @@ def snippets_network_vmid_post(vm_id):
                 "type": "physical",
                 "name": "eth0",
                 "mac_address": mac_address,
+                "gateway4": ipv4_addresses[0].get('gateway'),
+                "gateway6": ipv6_addresses[0].get('gateway'),
                 "subnets": network_static_assignments
             },
             {
