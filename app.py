@@ -140,12 +140,13 @@ def snippets_network_vmid_post(vm_id):
 
 @app.route('/node/snippets/network/<vm_id>/apply', methods=['post'])
 def snippets_network_vmid_apply_post(vm_id):
+    vm_id = str(vm_id)
     result = subprocess.run([
         "qm",
         "set",
         vm_id,
         "--cicustom",
-        f'\"network=local:snippets/{vm_id}-network.yaml\"'
+        f'network=local:snippets/{vm_id}-network.yaml'
     ])
 
     return { "status": "ok" }
