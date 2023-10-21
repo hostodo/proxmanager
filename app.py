@@ -130,11 +130,11 @@ def snippets_network_vmid_post(vm_id):
         yaml = YAML()
         yaml.preserve_quotes = True
         yaml.explicit_start = True
-        yaml.dump(cloud_init_network_v2, outfile)
+        yaml.dump(cloud_init_network, outfile)
 
     return {
         "file_path": config_file_path,
-        "config": cloud_init_network_v2
+        "config": cloud_init_network
     }
 
 
