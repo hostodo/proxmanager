@@ -30,6 +30,7 @@ def status():
 def snippets_network_vmid_post(vm_id):
     authenticate()
     body = request.json
+    is_centos = body.get('is_centos')
     ipv4_addresses = body.get('ipv4_addresses')
     ipv6_addresses = body.get('ipv6_addresses')
     mac_address = body.get('mac_address')
@@ -104,22 +105,6 @@ def snippets_network_vmid_post(vm_id):
                 "addresses": v2_addresses,
                 "gateway4": ipv4_addresses[0].get('gateway'),
                 "gateway6": ipv6_addresses[0].get('gateway'),
-                "routes": [
-                    {
-                        "to": ipv6_addresses[0].get('gateway'),
-                        "via": f'::',
-                        "on-link": True
-                    },
-                    {
-                        "to": "::/0",
-                        "on-link": True,
-                        "via": ipv6_addresses[0].get('gateway')
-                    },
-                    {
-                        "to": "0.0.0.0/0",
-                        "via": "66.187.7.1"
-                    }
-                ],
                 "nameservers": {
                     "addresses": [
                         '8.8.8.8',
@@ -129,6 +114,23 @@ def snippets_network_vmid_post(vm_id):
             }
         }
     }
+    if not is_centos:
+        cloud_init_network_v2["ethernets"]["eth0"]["routes"] = [{
+                "to": ipv6_addresses[0].get('gateway'),
+                "via": f'::',
+                "on-link": True
+            },
+            {
+                "to": "::/0",
+                "on-link": True,
+                "via": ipv6_addresses[0].get('gateway')
+            },
+            {
+                "to": "0.0.0.0/0",
+                "via": "66.187.7.1"
+            }
+        ]
+
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
         yaml = YAML()
