@@ -99,20 +99,21 @@ def snippets_network_vmid_post(vm_id):
     cloud_init_network_v2 = {
         "version": 2,
         "ethernets": {
-            [network_device_name]: {
-                "match": {
-                    "macaddress": mac_address
-                },
-                "addresses": v2_addresses,
-                "gateway4": ipv4_addresses[0].get('gateway'),
-                "gateway6": ipv6_addresses[0].get('gateway'),
-                "nameservers": {
-                    "addresses": [
-                        '8.8.8.8',
-                        '8.8.4.4'
-                    ]
-                }
-            }
+        }
+    }
+
+    cloud_init_network_v2["ethernets"][network_device_name] = {
+        "match": {
+            "macaddress": mac_address
+        },
+        "addresses": v2_addresses,
+        "gateway4": ipv4_addresses[0].get('gateway'),
+        "gateway6": ipv6_addresses[0].get('gateway'),
+        "nameservers": {
+            "addresses": [
+                '8.8.8.8',
+                '8.8.4.4'
+            ]
         }
     }
 
