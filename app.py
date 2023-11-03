@@ -31,6 +31,7 @@ def snippets_network_vmid_post(vm_id):
     authenticate()
     body = request.json
     is_centos = body.get('is_centos')
+    network_device_name = body.get('network_device_name', 'eth0')
     ipv4_addresses = body.get('ipv4_addresses')
     ipv6_addresses = body.get('ipv6_addresses')
     mac_address = body.get('mac_address')
@@ -98,7 +99,7 @@ def snippets_network_vmid_post(vm_id):
     cloud_init_network_v2 = {
         "version": 2,
         "ethernets": {
-            "eth0": {
+            [network_device_name]: {
                 "match": {
                     "macaddress": mac_address
                 },
@@ -114,6 +115,7 @@ def snippets_network_vmid_post(vm_id):
             }
         }
     }
+
     if not is_centos:
         cloud_init_network_v2["ethernets"]["eth0"]["routes"] = [{
                 "to": ipv6_addresses[0].get('gateway'),
