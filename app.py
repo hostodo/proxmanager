@@ -117,7 +117,7 @@ def snippets_network_vmid_post(vm_id):
     }
 
     if not is_centos:
-        cloud_init_network_v2["ethernets"]["eth0"]["routes"] = [{
+        cloud_init_network_v2["ethernets"][network_device_name]["routes"] = [{
                 "to": ipv6_addresses[0].get('gateway'),
                 "via": f'::',
                 "on-link": True
