@@ -36,58 +36,10 @@ def snippets_network_vmid_post(vm_id):
     ipv6_addresses = body.get('ipv6_addresses')
     mac_address = body.get('mac_address')
 
-    def stringit(s):
-        return s
-
     if not ipv4_addresses or not mac_address:
         return {
             "error": "ipv4_addresses and mac_address are required"
         }, 400
-
-    network_static_assignments = []
-    for ipv4_address in ipv4_addresses:
-        network_static_assignments.append({
-            "type": "static",
-            "address": stringit(ipv4_address.get('address')),
-            "netmask": stringit(ipv4_address.get('netmask')),
-            "gateway": stringit(ipv4_address.get('gateway'))
-        })
-
-    for ipv6_address in ipv6_addresses:
-        network_static_assignments.append({
-            "type": "static6",
-            "address": stringit(ipv6_address.get('address')),
-            "gateway": stringit(ipv6_address.get('gateway')),
-            "routes": [
-                {
-                    "to": stringit(ipv6_address.get('gateway'))
-                }
-            ]
-        })
-
-    cloud_init_network = {
-        "version": 1,
-        "config": [
-            {
-                "type": "physical",
-                "name": "eth0",
-                "mac_address": mac_address,
-                "gateway4": ipv4_addresses[0].get('gateway'),
-                "gateway6": ipv6_addresses[0].get('gateway'),
-                "subnets": network_static_assignments
-            },
-            {
-                "type": "nameserver",
-                "address": [
-                    stringit("8.8.8.8"),
-                    stringit("8.8.4.4")
-                ],
-                "search": [
-                    stringit("det01.hostodo.com")
-                ]
-            }
-        ]
-    }
 
     v2_addresses = []
     for ipv4_address in ipv4_addresses:
@@ -117,6 +69,7 @@ def snippets_network_vmid_post(vm_id):
         }
     }
 
+    # CentOS does not need these routes manually added, this causes an error on boot
     if not is_centos:
         cloud_init_network_v2["ethernets"][network_device_name]["routes"] = [{
                 "to": ipv6_addresses[0].get('gateway'),
