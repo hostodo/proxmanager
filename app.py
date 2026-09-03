@@ -32,8 +32,8 @@ def snippets_network_vmid_post(vm_id):
     body = request.json
     is_centos = body.get('is_centos')
     network_device_name = body.get('network_device_name', 'eth0')
-    ipv4_addresses = body.get('ipv4_addresses')
-    ipv6_addresses = body.get('ipv6_addresses')
+    ipv4_addresses = body.get('ipv4_addresses') or []
+    ipv6_addresses = body.get('ipv6_addresses') or []
     mac_address = body.get('mac_address')
 
     if not ipv4_addresses or not mac_address:
@@ -54,13 +54,12 @@ def snippets_network_vmid_post(vm_id):
         }
     }
 
-    cloud_init_network_v2["ethernets"][network_device_name] = {
+    ethernet_config = {
         "match": {
             "macaddress": mac_address
         },
         "addresses": v2_addresses,
         "gateway4": ipv4_addresses[0].get('gateway'),
-        "gateway6": ipv6_addresses[0].get('gateway'),
         "nameservers": {
             "addresses": [
                 '8.8.8.8',
@@ -69,23 +68,32 @@ def snippets_network_vmid_post(vm_id):
         }
     }
 
+    if ipv6_addresses:
+        ipv6_gateway = ipv6_addresses[0].get('gateway')
+        ethernet_config["gateway6"] = ipv6_gateway
+
+    cloud_init_network_v2["ethernets"][network_device_name] = ethernet_config
+
     # CentOS does not need these routes manually added, this causes an error on boot
-    if not is_centos:
-        cloud_init_network_v2["ethernets"][network_device_name]["routes"] = [{
-                "to": ipv6_addresses[0].get('gateway'),
-                "via": f'::',
-                "on-link": True
-            },
+    routes = [{
+        "to": "0.0.0.0/0",
+        "via": os.getenv('DEFAULT_GATEWAY', ipv4_addresses[0].get('gateway'))
+    }]
+    if ipv6_addresses and not is_centos:
+        ipv6_gateway = ipv6_addresses[0].get('gateway')
+        routes = [{
+            "to": ipv6_gateway,
+            "via": f'::',
+            "on-link": True
+        },
             {
                 "to": "::/0",
                 "on-link": True,
-                "via": ipv6_addresses[0].get('gateway')
-            },
-            {
-                "to": "0.0.0.0/0",
-                "via": "66.187.7.1"
-            }
-        ]
+                "via": ipv6_gateway
+        }] + routes
+
+    if routes:
+        cloud_init_network_v2["ethernets"][network_device_name]["routes"] = routes
 
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
