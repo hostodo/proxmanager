@@ -40,6 +40,7 @@ class NetworkSnippetTests(unittest.TestCase):
             config = YAML().load(fh)
         ethernet = config['ethernets']['eth0']
         self.assertEqual(ethernet['gateway4'], '66.187.7.1')
+        self.assertIn({'to': '0.0.0.0/0', 'via': '66.187.7.1'}, ethernet['routes'])
         self.assertNotIn('gateway6', ethernet)
         self.assertNotIn({'to': '::/0', 'via': None, 'on-link': True}, ethernet.get('routes', []))
 
