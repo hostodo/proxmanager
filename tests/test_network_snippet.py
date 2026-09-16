@@ -43,6 +43,18 @@ class NetworkSnippetTests(unittest.TestCase):
         self.assertNotIn('gateway6', ethernet)
         self.assertNotIn({'to': '::/0', 'via': None, 'on-link': True}, ethernet.get('routes', []))
 
+    def test_centos_ipv4_only_network_snippet_omits_manual_routes(self):
+        response = self.post_network({
+            'ipv4_addresses': [{'address': '66.187.7.58', 'gateway': '66.187.7.1'}],
+            'network_device_name': 'eth0',
+            'is_centos': True,
+            'mac_address': 'BC:24:11:53:E5:A4',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        ethernet = response.get_json()['config']['ethernets']['eth0']
+        self.assertNotIn('routes', ethernet)
+
     def test_dual_stack_network_snippet_keeps_ipv6_gateway_and_routes(self):
         response = self.post_network({
             'ipv4_addresses': [{'address': '66.187.7.58', 'gateway': '66.187.7.1'}],

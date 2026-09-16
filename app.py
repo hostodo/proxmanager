@@ -75,10 +75,12 @@ def snippets_network_vmid_post(vm_id):
     cloud_init_network_v2["ethernets"][network_device_name] = ethernet_config
 
     # CentOS does not need these routes manually added, this causes an error on boot
-    routes = [{
-        "to": "0.0.0.0/0",
-        "via": os.getenv('DEFAULT_GATEWAY', ipv4_addresses[0].get('gateway'))
-    }]
+    routes = []
+    if not is_centos:
+        routes = [{
+            "to": "0.0.0.0/0",
+            "via": os.getenv('DEFAULT_GATEWAY', ipv4_addresses[0].get('gateway'))
+        }]
     if ipv6_addresses and not is_centos:
         ipv6_gateway = ipv6_addresses[0].get('gateway')
         routes = [{
