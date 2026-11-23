@@ -125,6 +125,10 @@ installer. Before enabling them, the operator must:
    socket with nginx group access. The HTTP runtime directory is recreated when
    the service stops, removing a socket left by a crash.
 4. Add the exact nginx location inside the existing private TLS server block.
+   The sample denies every network caller until its commented `allow` directive
+   is replaced with the verified control-plane egress address and enabled.
+   Keep `deny all` after that allowlist. Verify the address at the node; do not
+   assume the AWS host's inbound address is also its outbound source address.
    Keep existing snippet locations intact. Restrict ingress to the control plane
    using the existing network/access policy. The Go endpoint also checks the
    status token; nginx must forward Authorization. Do not expose the Unix socket
