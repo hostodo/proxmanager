@@ -184,6 +184,9 @@ func prepareDirectory(path string) error {
 	if !filepath.IsAbs(path) {
 		return errors.New("snapshot path must be absolute")
 	}
+	if filepath.Base(path) == ".observer.lock" {
+		return errors.New("snapshot path uses the reserved observer lock name")
+	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0750); err != nil {
 		return err

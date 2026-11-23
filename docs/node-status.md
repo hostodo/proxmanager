@@ -37,8 +37,13 @@ production end-to-end p99 latency. Those require a separately approved canary.
 The observer invokes exactly this command with a one-second deadline:
 
 ```text
-/usr/bin/pvesh get /nodes/<PVE_NODE_NAME>/qemu --full 0 --output-format json
+/usr/bin/pvesh --noproxy get /nodes/<PVE_NODE_NAME>/qemu --full 0 --output-format json
 ```
+
+The leading `--noproxy` makes PVE reject a target other than its local node or
+`localhost`, so a misconfigured node name cannot fetch a peer's observations.
+This uses PVE's own local-node check in
+[`pvesh check_proxyto`](https://github.com/proxmox/pve-manager/blob/master/PVE/CLI/pvesh.pm).
 
 It accepts unique positive VMIDs with `running` or `stopped` status and excludes
 rows marked `template: 1`. An unsupported state, malformed list, failed command,
@@ -49,10 +54,13 @@ does not prove how recently PVE itself sampled the state.
 
 Output is capped at 2 MiB and 10,000 rows, with no per-VM subprocesses. Child
 processes run in their own process group and are killed after completion or
-cancellation. The observer waits at most another 100 ms for command pipes. Stderr
+cancellation, before reaping the group leader. The leader's unreaped PID keeps
+the process-group identity reserved until cleanup finishes. The observer waits
+at most another 100 ms for command pipes. Stderr
 is discarded and failure logs contain no source output. Collection is serial;
 a slow or failed query cannot create an overlapping collector within the process.
 A nonblocking file lock prevents a second observer using the same directory.
+The `.observer.lock` filename is reserved and cannot be a snapshot destination.
 
 Each successful sample gets a sequence number. Each observer process starts a
 new random UUID epoch. The boot ID comes from `/proc/sys/kernel/random/boot_id`.

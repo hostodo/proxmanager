@@ -331,7 +331,7 @@ func script(t *testing.T, body string) string {
 }
 
 func TestSourceUsesBulkArgsAndExcludesTemplates(t *testing.T) {
-	command := script(t, `[ "$*" = "get /nodes/fixture/qemu --full 0 --output-format json" ] || exit 8
+	command := script(t, `[ "$*" = "--noproxy get /nodes/fixture/qemu --full 0 --output-format json" ] || exit 8
 printf '%s' '[{"vmid":1002,"status":"stopped"},{"vmid":9000,"template":1,"status":"stopped"},{"vmid":1001,"status":"running","ignored":"field"}]'`)
 	got, err := (Source{command, "fixture", time.Second}).Read(context.Background())
 	if err != nil {
@@ -431,6 +431,16 @@ func TestPublicationRejectsUnsafeDirectory(t *testing.T) {
 	}
 	if err := WriteSnapshot(filepath.Join(root, "link", "power.json"), sample()); err == nil {
 		t.Fatal("symlink directory accepted")
+	}
+}
+
+func TestObserverLockNameCannotBePublishedOver(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".observer.lock")
+	if _, err := LockObserver(path); err == nil {
+		t.Fatal("accepted reserved snapshot path")
+	}
+	if err := WriteSnapshot(path, sample()); err == nil {
+		t.Fatal("published over observer lock")
 	}
 }
 

@@ -44,27 +44,13 @@ func (s Source) Read(ctx context.Context) ([]VM, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, s.Timeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, s.Command, "get", "/nodes/"+s.NodeName+"/qemu", "--full", "0", "--output-format", "json")
+	cmd := exec.Command(s.Command, "--noproxy", "get", "/nodes/"+s.NodeName+"/qemu", "--full", "0", "--output-format", "json")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Cancel = func() error {
-		if cmd.Process == nil {
-			return nil
-		}
-		err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		if err == syscall.ESRCH {
-			return nil
-		}
-		return err
-	}
 	cmd.WaitDelay = 100 * time.Millisecond
 	var output boundedBuffer
 	cmd.Stdout = &output
 	cmd.Stderr = io.Discard
-	runErr := cmd.Run()
-	if cmd.Process != nil {
-		// A source that exits early can leave children holding its output pipe.
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-	}
+	runErr := runProcessGroup(ctx, cmd)
 	if runErr != nil {
 		return nil, errors.New("source command failed or exceeded its bounds")
 	}
