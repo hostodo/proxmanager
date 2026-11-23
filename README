@@ -20,3 +20,7 @@ cd ./install
 sh install.sh node.hostname.com # This will install the systemd service and nginx config
 
 
+
+Additive node power status observer/API (Go, disabled until explicitly installed):
+See docs/node-status.md for build, verification, protocol and service separation.
+The Go component does not replace or modify the existing Python snippet routes.

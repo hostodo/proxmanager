@@ -4,3 +4,5 @@ fakenode/var/lib/vz/snippets/*
 .env
 .env.dev
 .env.local
+
+/build/

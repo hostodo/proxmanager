@@ -1,0 +1,30 @@
+[Unit]
+Description=Proxmanager fixed-file power status API
+
+[Service]
+Type=simple
+User=proxmanager-status
+Group=www-data
+SupplementaryGroups=proxmanager-status
+EnvironmentFile=/etc/proxmanager-status/node.env
+LoadCredential=status-token:/etc/proxmanager-status/status-token
+ExecStart=/usr/local/libexec/proxmanager serve-status --node-id=${NODE_ID} --token-file=%d/status-token
+RuntimeDirectory=proxmanager-status
+RuntimeDirectoryMode=0750
+UMask=0007
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run/proxmanager-status
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

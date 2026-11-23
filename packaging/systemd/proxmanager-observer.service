@@ -1,0 +1,24 @@
+[Unit]
+Description=Proxmanager node power observer
+After=pve-cluster.service
+
+[Service]
+Type=simple
+User=root
+Group=proxmanager-status
+EnvironmentFile=/etc/proxmanager-status/node.env
+ExecStart=/usr/local/libexec/proxmanager observe --node-id=${NODE_ID} --node-name=${NODE_NAME}
+RuntimeDirectory=hostodo-node
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+UMask=0027
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run/hostodo-node
+
+[Install]
+WantedBy=multi-user.target
