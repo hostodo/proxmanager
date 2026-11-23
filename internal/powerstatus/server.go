@@ -81,7 +81,6 @@ func Listen(unixSocket, tcpAddress string) (net.Listener, error) {
 	if !filepath.IsAbs(unixSocket) {
 		return nil, errors.New("Unix socket path must be absolute")
 	}
-	// Do not unlink an existing socket: it may belong to a running server.
 	listener, err := net.Listen("unix", unixSocket)
 	if err != nil {
 		return nil, err

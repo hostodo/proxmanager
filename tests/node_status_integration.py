@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Exercise the built binary using only private local fixtures."""
 import concurrent.futures
 import http.client
 import json
