@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -112,21 +113,26 @@ func run(ctx context.Context, args []string) error {
 	}
 	defer listener.Close()
 	server := &http.Server{Handler: powerstatus.Handler(*path, *nodeID, clock, token), ReadHeaderTimeout: 2 * time.Second, ReadTimeout: 3 * time.Second, WriteTimeout: 3 * time.Second, IdleTimeout: 15 * time.Second, MaxHeaderBytes: 8192}
-	stopped := make(chan struct{})
-	defer close(stopped)
-	go func() {
-		select {
-		case <-ctx.Done():
-			stop, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-			_ = server.Shutdown(stop)
-		case <-stopped:
-		}
-	}()
 	log.Printf("status server listening on %s", listener.Addr())
-	err = server.Serve(listener)
-	if errors.Is(err, http.ErrServerClosed) {
+	return serveStatus(ctx, server, listener)
+}
+
+func serveStatus(ctx context.Context, server *http.Server, listener net.Listener) error {
+	served := make(chan error, 1)
+	go func() { served <- server.Serve(listener) }()
+	select {
+	case err := <-served:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		stop, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err := server.Shutdown(stop); err != nil {
+			_ = server.Close()
+			return err
+		}
 		return nil
 	}
-	return err
 }

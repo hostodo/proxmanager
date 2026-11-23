@@ -146,15 +146,22 @@ func ReadSnapshot(path string, nodeID int64, clock Clock) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, err
 	}
-	var disk DiskSnapshot
+	var decoded struct {
+		Snapshot
+		SampleStartedUptimeMS *int64 `json:"sample_started_uptime_ms"`
+	}
 	dec := json.NewDecoder(bytes.NewReader(b))
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&disk); err != nil {
+	if err := dec.Decode(&decoded); err != nil {
 		return Snapshot{}, err
 	}
 	if err := dec.Decode(new(any)); err != io.EOF {
 		return Snapshot{}, errors.New("trailing snapshot data")
 	}
+	if decoded.SampleStartedUptimeMS == nil {
+		return Snapshot{}, errors.New("missing snapshot boot-relative start time")
+	}
+	disk := DiskSnapshot{Snapshot: decoded.Snapshot, SampleStartedUptimeMS: *decoded.SampleStartedUptimeMS}
 	if err := validate(disk); err != nil {
 		return Snapshot{}, err
 	}

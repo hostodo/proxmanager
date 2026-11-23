@@ -87,6 +87,46 @@ func TestReadRejectsDifferentBootNodeAndBackwardsClock(t *testing.T) {
 	}
 }
 
+func TestHTTPRequiresBootRelativeStartButAcceptsZero(t *testing.T) {
+	for _, scenario := range []string{"missing", "null", "zero"} {
+		t.Run(scenario, func(t *testing.T) {
+			path, clock := fixture(t)
+			encoded, err := json.Marshal(sample())
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fields map[string]any
+			if err := json.Unmarshal(encoded, &fields); err != nil {
+				t.Fatal(err)
+			}
+			switch scenario {
+			case "missing":
+				delete(fields, "sample_started_uptime_ms")
+			case "null":
+				fields["sample_started_uptime_ms"] = nil
+			case "zero":
+				fields["sample_started_uptime_ms"] = 0
+			}
+			encoded, err = json.Marshal(fields)
+			if err != nil {
+				t.Fatal(err)
+			}
+			write(t, path, string(encoded))
+			request := httptest.NewRequest(http.MethodGet, "/v1/power-state", nil)
+			request.Header.Set("Authorization", "Bearer "+testToken)
+			response := httptest.NewRecorder()
+			Handler(path, 7, clock, testToken).ServeHTTP(response, request)
+			expected := http.StatusServiceUnavailable
+			if scenario == "zero" {
+				expected = http.StatusOK
+			}
+			if response.Code != expected {
+				t.Fatalf("status = %d, want %d", response.Code, expected)
+			}
+		})
+	}
+}
+
 func TestReadRejectsMalformedOversizedAndNonRegularFiles(t *testing.T) {
 	for _, kind := range []string{"invalid_json", "trailing", "unknown_field", "oversized", "symlink", "directory"} {
 		t.Run(kind, func(t *testing.T) {
