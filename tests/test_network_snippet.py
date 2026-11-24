@@ -45,7 +45,7 @@ class NetworkSnippetTests(unittest.TestCase):
         })
 
         ethernet = self.read_ethernet(response)
-        self.assertNotIn('gateway4', ethernet)
+        self.assertEqual(ethernet['gateway4'], '66.187.7.1')
         self.assertNotIn('gateway6', ethernet)
         self.assertEqual(ethernet['routes'], [{'to': '0.0.0.0/0', 'via': '66.187.7.1'}])
 
@@ -68,6 +68,7 @@ class NetworkSnippetTests(unittest.TestCase):
             'ipv6_addresses': [{'address': '2001:db8:1::1234', 'gateway': '2001:db8:2::1'}],
             'network_device_name': 'eth0',
             'is_centos': False,
+            'explicit_default_routes': True,
             'mac_address': 'BC:24:11:53:E5:A4',
         })
 
@@ -81,6 +82,48 @@ class NetworkSnippetTests(unittest.TestCase):
             {'to': '::/0', 'via': '2001:db8:2::1'},
             {'to': '0.0.0.0/0', 'via': '192.0.2.1'},
         ])
+
+    def test_dual_stack_legacy_format_keeps_existing_alpine_routes(self):
+        ipv6_gateway = '2001:db8:2::1'
+        request = {
+            'ipv4_addresses': [{'address': '192.0.2.58', 'gateway': '192.0.2.1'}],
+            'ipv6_addresses': [{'address': '2001:db8:1::1234', 'gateway': ipv6_gateway}],
+            'network_device_name': 'eth0',
+            'is_centos': False,
+            'mac_address': 'BC:24:11:53:E5:A4',
+        }
+        for payload in (request, dict(request, explicit_default_routes=False)):
+            with self.subTest(payload=payload):
+                ethernet = self.read_ethernet(self.post_network(payload))
+                self.assertEqual(ethernet['gateway4'], '192.0.2.1')
+                self.assertEqual(ethernet['gateway6'], ipv6_gateway)
+                self.assertEqual(ethernet['routes'], [
+                    {'to': ipv6_gateway, 'via': '::', 'on-link': True},
+                    {'to': '::/0', 'via': ipv6_gateway, 'on-link': True},
+                    {'to': '0.0.0.0/0', 'via': '192.0.2.1'},
+                ])
+
+    def test_ipv4_only_explicit_format_omits_gateway_fields(self):
+        ethernet = self.read_ethernet(self.post_network({
+            'ipv4_addresses': [{'address': '192.0.2.58', 'gateway': '192.0.2.1'}],
+            'explicit_default_routes': True,
+            'mac_address': 'BC:24:11:53:E5:A4',
+        }))
+        self.assertNotIn('gateway4', ethernet)
+        self.assertNotIn('gateway6', ethernet)
+        self.assertEqual(ethernet['routes'], [{'to': '0.0.0.0/0', 'via': '192.0.2.1'}])
+
+    def test_explicit_routes_rejects_invalid_flag_and_centos_combination(self):
+        for value, is_centos in (('true', False), (1, False), (None, False), (True, True)):
+            with self.subTest(value=value, is_centos=is_centos):
+                response = self.post_network({
+                    'ipv4_addresses': [{'address': '192.0.2.58', 'gateway': '192.0.2.1'}],
+                    'explicit_default_routes': value,
+                    'is_centos': is_centos,
+                    'mac_address': 'BC:24:11:53:E5:A4',
+                })
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(os.listdir(self.tmp.name), [])
 
     def test_centos_dual_stack_keeps_gateway_fields_without_manual_routes(self):
         response = self.post_network({
