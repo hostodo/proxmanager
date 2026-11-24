@@ -59,7 +59,6 @@ def snippets_network_vmid_post(vm_id):
             "macaddress": mac_address
         },
         "addresses": v2_addresses,
-        "gateway4": ipv4_addresses[0].get('gateway'),
         "nameservers": {
             "addresses": [
                 '8.8.8.8',
@@ -68,34 +67,28 @@ def snippets_network_vmid_post(vm_id):
         }
     }
 
-    if ipv6_addresses:
-        ipv6_gateway = ipv6_addresses[0].get('gateway')
-        ethernet_config["gateway6"] = ipv6_gateway
-
     cloud_init_network_v2["ethernets"][network_device_name] = ethernet_config
 
-    # CentOS does not need these routes manually added, this causes an error on boot
-    routes = []
-    if not is_centos:
-        routes = [{
+    ipv4_gateway = ipv4_addresses[0].get('gateway')
+    if is_centos:
+        # CentOS and AlmaLinux use the gateway fields without explicit routes.
+        ethernet_config["gateway4"] = ipv4_gateway
+        if ipv6_addresses:
+            ethernet_config["gateway6"] = ipv6_addresses[0].get('gateway')
+    else:
+        routes = []
+        if ipv6_addresses:
+            ipv6_gateway = ipv6_addresses[0].get('gateway')
+            # A direct host route makes an off-prefix gateway reachable.
+            routes.extend([
+                {"to": f"{ipv6_gateway}/128", "via": "::"},
+                {"to": "::/0", "via": ipv6_gateway},
+            ])
+        routes.append({
             "to": "0.0.0.0/0",
-            "via": ipv4_addresses[0].get('gateway')
-        }]
-    if ipv6_addresses and not is_centos:
-        ipv6_gateway = ipv6_addresses[0].get('gateway')
-        routes = [{
-            "to": ipv6_gateway,
-            "via": f'::',
-            "on-link": True
-        },
-            {
-                "to": "::/0",
-                "on-link": True,
-                "via": ipv6_gateway
-        }] + routes
-
-    if routes:
-        cloud_init_network_v2["ethernets"][network_device_name]["routes"] = routes
+            "via": ipv4_gateway,
+        })
+        ethernet_config["routes"] = routes
 
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
