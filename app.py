@@ -31,6 +31,9 @@ def snippets_network_vmid_post(vm_id):
     authenticate()
     body = request.json
     is_centos = body.get('is_centos')
+    explicit_routes = body.get('explicit_default_routes', False)
+    if not isinstance(explicit_routes, bool) or (explicit_routes and is_centos):
+        return {"error": "explicit_default_routes must be a boolean and is unsupported for CentOS or AlmaLinux"}, 400
     network_device_name = body.get('network_device_name', 'eth0')
     ipv4_addresses = body.get('ipv4_addresses') or []
     ipv6_addresses = body.get('ipv6_addresses') or []
@@ -54,48 +57,42 @@ def snippets_network_vmid_post(vm_id):
         }
     }
 
+    ipv4_gateway = ipv4_addresses[0].get('gateway')
+    ipv6_gateway = ipv6_addresses[0].get('gateway') if ipv6_addresses else None
     ethernet_config = {
         "match": {
             "macaddress": mac_address
         },
         "addresses": v2_addresses,
-        "gateway4": ipv4_addresses[0].get('gateway'),
-        "nameservers": {
-            "addresses": [
-                '8.8.8.8',
-                '8.8.4.4'
-            ]
-        }
     }
-
-    if ipv6_addresses:
-        ipv6_gateway = ipv6_addresses[0].get('gateway')
+    if not explicit_routes:
+        ethernet_config["gateway4"] = ipv4_gateway
+    ethernet_config["nameservers"] = {"addresses": ['8.8.8.8', '8.8.4.4']}
+    if ipv6_addresses and not explicit_routes:
         ethernet_config["gateway6"] = ipv6_gateway
 
     cloud_init_network_v2["ethernets"][network_device_name] = ethernet_config
 
-    # CentOS does not need these routes manually added, this causes an error on boot
-    routes = []
+    # CentOS and AlmaLinux continue to use only the gateway fields.
     if not is_centos:
-        routes = [{
+        routes = []
+        if ipv6_addresses:
+            if explicit_routes:
+                # A direct host route makes an off-prefix gateway reachable.
+                routes.extend([
+                    {"to": f"{ipv6_gateway}/128", "via": "::"},
+                    {"to": "::/0", "via": ipv6_gateway},
+                ])
+            else:
+                routes.extend([
+                    {"to": ipv6_gateway, "via": "::", "on-link": True},
+                    {"to": "::/0", "on-link": True, "via": ipv6_gateway},
+                ])
+        routes.append({
             "to": "0.0.0.0/0",
-            "via": ipv4_addresses[0].get('gateway')
-        }]
-    if ipv6_addresses and not is_centos:
-        ipv6_gateway = ipv6_addresses[0].get('gateway')
-        routes = [{
-            "to": ipv6_gateway,
-            "via": f'::',
-            "on-link": True
-        },
-            {
-                "to": "::/0",
-                "on-link": True,
-                "via": ipv6_gateway
-        }] + routes
-
-    if routes:
-        cloud_init_network_v2["ethernets"][network_device_name]["routes"] = routes
+            "via": ipv4_gateway,
+        })
+        ethernet_config["routes"] = routes
 
     config_file_path = f'{os.getenv("SNIPPETS_DIR")}/{vm_id}-network.yaml'
     with open(config_file_path, 'w') as outfile:
